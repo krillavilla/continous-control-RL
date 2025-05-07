@@ -1,0 +1,25 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environment binaries
+envs/
+
+# Saved models
+models/
+
+# IDE specific files
+.idea/
+.vscode/
+
+# OS specific files
+.DS_Store

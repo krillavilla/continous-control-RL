@@ -42,47 +42,81 @@ The environment is considered solved, when the average (over 100 episodes) of th
 
 ### Getting Started
 
-1. Download the environment from one of the links below.  You need only select the environment that matches your operating system:
+### Installation
 
-    - **_Version 1: One (1) Agent_**
-        - Linux: [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Reacher/one_agent/Reacher_Linux.zip)
-        - Mac OSX: [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Reacher/one_agent/Reacher.app.zip)
-        - Windows (32-bit): [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Reacher/one_agent/Reacher_Windows_x86.zip)
-        - Windows (64-bit): [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Reacher/one_agent/Reacher_Windows_x86_64.zip)
+To set up the project environment:
 
-    - **_Version 2: Twenty (20) Agents_**
-        - Linux: [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Reacher/Reacher_Linux.zip)
-        - Mac OSX: [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Reacher/Reacher.app.zip)
-        - Windows (32-bit): [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Reacher/Reacher_Windows_x86.zip)
-        - Windows (64-bit): [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Reacher/Reacher_Windows_x86_64.zip)
-    
-    (_For Windows users_) Check out [this link](https://support.microsoft.com/en-us/help/827218/how-to-determine-whether-a-computer-is-running-a-32-bit-version-or-64) if you need help with determining if your computer is running a 32-bit version or 64-bit version of the Windows operating system.
+1. Clone this repository
+2. **Python Version**: This project requires Python 3.6 for compatibility with the Unity ML-Agents environment.
+3. Install the required dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+   If you encounter any issues during installation, please refer to the `troubleshooting_guide.md` file.
 
-    (_For AWS_) If you'd like to train the agent on AWS (and have not [enabled a virtual screen](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Training-on-Amazon-Web-Service.md)), then please use [this link](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Reacher/one_agent/Reacher_Linux_NoVis.zip) (version 1) or [this link](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Reacher/Reacher_Linux_NoVis.zip) (version 2) to obtain the "headless" version of the environment.  You will **not** be able to watch the agent without enabling a virtual screen, but you will be able to train the agent.  (_To watch the agent, you should follow the instructions to [enable a virtual screen](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Training-on-Amazon-Web-Service.md), and then download the environment for the **Linux** operating system above._)
+### Unity Environment Setup
 
-2. Place the file in the DRLND GitHub repository, in the `p2_continuous-control/` folder, and unzip (or decompress) the file. 
+1. Download the Unity environment for Option 1 (single agent) that matches your operating system:
+   - Linux: [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Reacher/one_agent/Reacher_Linux.zip)
+   - Mac OSX: [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Reacher/one_agent/Reacher.app.zip)
+   - Windows (32-bit): [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Reacher/one_agent/Reacher_Windows_x86.zip)
+   - Windows (64-bit): [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Reacher/one_agent/Reacher_Windows_x86_64.zip)
+
+2. Place the unzipped environment files in the `envs/` directory. For example:
+   - Linux: `envs/Reacher_Linux/Reacher.x86_64`
+   - Mac: `envs/Reacher.app`
+   - Windows: `envs/Reacher_Windows_x86_64/Reacher.exe`
+
+3. Make sure the environment file has execute permissions (Linux/Mac):
+   ```bash
+   chmod +x envs/Reacher_Linux/Reacher.x86_64
+   ```
 
 ### Instructions
 
-Follow the instructions in `Continuous_Control.ipynb` to get started with training your own agent!  
+#### Verify Environment Setup
 
-### (Optional) Challenge: Crawler Environment
+To verify that your environment is set up correctly:
 
-After you have successfully completed the project, you might like to solve the more difficult **Crawler** environment.
+```bash
+python src/verify_env.py --env_path envs/Reacher_Linux/Reacher.x86_64
+```
 
-![Crawler][image2]
+Adjust the path to match your operating system and environment location.
 
-In this continuous control environment, the goal is to teach a creature with four legs to walk forward without falling.  
+#### Training the Agent
 
-You can read more about this environment in the ML-Agents GitHub [here](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Learning-Environment-Examples.md#crawler).  To solve this harder task, you'll need to download a new Unity environment.  (**Note**: Udacity students should not submit a project with this new environment.)
+To train the agent with default parameters:
 
-You need only select the environment that matches your operating system:
-- Linux: [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Crawler/Crawler_Linux.zip)
-- Mac OSX: [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Crawler/Crawler.app.zip)
-- Windows (32-bit): [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Crawler/Crawler_Windows_x86.zip)
-- Windows (64-bit): [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Crawler/Crawler_Windows_x86_64.zip)
+```bash
+python src/train.py --env envs/Reacher_Linux/Reacher.x86_64
+```
 
-Then, place the file in the `p2_continuous-control/` folder in the DRLND GitHub repository, and unzip (or decompress) the file.  Next, open `Crawler.ipynb` and follow the instructions to learn how to use the Python API to control the agent.
+For a quick test with fewer episodes:
 
-(_For AWS_) If you'd like to train the agent on AWS (and have not [enabled a virtual screen](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Training-on-Amazon-Web-Service.md)), then please use [this link](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Crawler/Crawler_Linux_NoVis.zip) to obtain the "headless" version of the environment.  You will **not** be able to watch the agent without enabling a virtual screen, but you will be able to train the agent.  (_To watch the agent, you should follow the instructions to [enable a virtual screen](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Training-on-Amazon-Web-Service.md), and then download the environment for the **Linux** operating system above._)
+```bash
+python src/train.py --env envs/Reacher_Linux/Reacher.x86_64 --n_episodes 5 --max_t 200
+```
 
+The trained model will be saved to the `models/` directory.
+
+#### Running the Notebook
+
+To explore the project in a Jupyter notebook:
+
+1. Start Jupyter:
+   ```bash
+   jupyter notebook
+   ```
+
+2. Navigate to the `notebooks/` directory and open `Continuous_Control.ipynb`
+
+3. **Important**: The notebook uses relative paths (`../envs/Reacher_Linux/Reacher.x86_64`) to access the environment files. Make sure you're running the notebook from the `notebooks/` directory, not the project root.
+
+4. Follow the instructions in the notebook to train and evaluate the agent
+
+### Troubleshooting
+
+If you encounter any issues, please refer to the `troubleshooting_guide.md` file for solutions to common problems. For specific issues:
+
+- **Pandas Version Compatibility**: If you encounter issues with pandas installation on Python 3.6, see the troubleshooting_guide.md file for a detailed solution.
