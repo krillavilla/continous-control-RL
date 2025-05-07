@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from .utils import ReplayBuffer, OUNoise  # Use relative import for utils module
+from utils import ReplayBuffer, OUNoise  # Use absolute import for utils module
 
 # Check for CUDA availability and handle compatibility issues
 try:
@@ -123,7 +123,8 @@ class Agent:
     def __init__(self, state_size, action_size, random_seed,
                  buffer_size=int(1e6), batch_size=64, gamma=0.99, tau=5e-3,
                  lr_actor=3e-4, lr_critic=3e-3, weight_decay=0,
-                 fc1_units=256, fc2_units=128):
+                 fc1_units=256, fc2_units=128,
+                 ou_mu=0., ou_theta=0.15, ou_sigma=0.2, ou_min_sigma=0.05, ou_decay_period=10000):
         """Initialize an Agent object.
 
         Params
@@ -140,6 +141,11 @@ class Agent:
             weight_decay (float): L2 weight decay for critic
             fc1_units (int): number of nodes in first hidden layer
             fc2_units (int): number of nodes in second hidden layer
+            ou_mu (float): mean of the Ornstein-Uhlenbeck noise
+            ou_theta (float): parameter controlling the speed of mean reversion
+            ou_sigma (float): initial standard deviation of the noise
+            ou_min_sigma (float): minimum standard deviation (sigma will decay to this)
+            ou_decay_period (int): number of steps over which to decay sigma
         """
         self.state_size = state_size
         self.action_size = action_size
@@ -157,13 +163,14 @@ class Agent:
         self.critic_local = Critic(state_size, action_size, random_seed, fc1_units, fc2_units).to(device)
         self.critic_target = Critic(state_size, action_size, random_seed, fc1_units, fc2_units).to(device)
         self.critic_optimizer = optim.Adam(self.critic_local.parameters(), lr=lr_critic, weight_decay=weight_decay)
-        
+
         # Initialize Replay Memory
         self.memory = ReplayBuffer(action_size, buffer_size, batch_size, random_seed)
-        
-        # Initialize Noise process
-        self.noise = OUNoise(action_size, random_seed)
-        
+
+        # Initialize Noise process with specified parameters
+        self.noise = OUNoise(action_size, random_seed, mu=ou_mu, theta=ou_theta, 
+                            sigma=ou_sigma, min_sigma=ou_min_sigma, decay_period=ou_decay_period)
+
         # Initialize noise decay parameters
         self.noise_scale = 1.0
         self.noise_decay = 0.995
@@ -206,7 +213,7 @@ class Agent:
         where:
             actor_target(state) -> action
             critic_target(state, action) -> Q-value
-    
+
         Params
         ======
             experiences (Tuple[torch.Tensor]): tuple of (s, a, r, s', done) tuples 

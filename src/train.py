@@ -10,7 +10,11 @@ from agent import Agent
 from utils import ReplayBuffer, OUNoise, plot_scores  # Added plot_scores import here
 
 def train(env_path, n_episodes=1000, max_t=1000, print_every=10, 
-          solve_score=30.0, window_size=100, save_dir='models', no_graphics=False):
+          solve_score=30.0, window_size=100, save_dir='models', no_graphics=False,
+          config_name='default', buffer_size=int(1e6), batch_size=64, gamma=0.99, 
+          tau=5e-3, lr_actor=3e-4, lr_critic=3e-3, weight_decay=0, 
+          fc1_units=256, fc2_units=128, ou_mu=0., ou_theta=0.15, ou_sigma=0.2, 
+          ou_min_sigma=0.05, ou_decay_period=10000):
     """Train the agent using DDPG.
 
     Params
@@ -22,6 +26,22 @@ def train(env_path, n_episodes=1000, max_t=1000, print_every=10,
         solve_score (float): environment is considered solved when average score >= solve_score
         window_size (int): window size for calculating average score
         save_dir (string): directory to save model checkpoints
+        no_graphics (bool): run the environment in no-graphics mode
+        config_name (string): name of the configuration for saving models and plots
+        buffer_size (int): replay buffer size
+        batch_size (int): minibatch size
+        gamma (float): discount factor
+        tau (float): soft update parameter for target networks
+        lr_actor (float): learning rate for the actor network
+        lr_critic (float): learning rate for the critic network
+        weight_decay (float): L2 weight decay for the critic
+        fc1_units (int): number of units in first hidden layer
+        fc2_units (int): number of units in second hidden layer
+        ou_mu (float): mean of the Ornstein-Uhlenbeck noise
+        ou_theta (float): parameter controlling the speed of mean reversion
+        ou_sigma (float): initial standard deviation of the noise
+        ou_min_sigma (float): minimum standard deviation (sigma will decay to this)
+        ou_decay_period (int): number of steps over which to decay sigma
     """
     # Create the environment with an improved retry mechanism for different worker_ids
     print(f"Attempting to connect to environment at: {env_path}")
@@ -79,8 +99,21 @@ def train(env_path, n_episodes=1000, max_t=1000, print_every=10,
     print(f"State size: {state_size}")
     print(f"Action size: {action_size}")
 
-    # Create agent
-    agent = Agent(state_size=state_size, action_size=action_size, random_seed=0)
+    # Create agent with specified hyperparameters
+    agent = Agent(
+        state_size=state_size, 
+        action_size=action_size, 
+        random_seed=0,
+        buffer_size=buffer_size,
+        batch_size=batch_size,
+        gamma=gamma,
+        tau=tau,
+        lr_actor=lr_actor,
+        lr_critic=lr_critic,
+        weight_decay=weight_decay,
+        fc1_units=fc1_units,
+        fc2_units=fc2_units
+    )
 
     # Create save directory if it doesn't exist
     if not os.path.exists(save_dir):
@@ -131,28 +164,39 @@ def train(env_path, n_episodes=1000, max_t=1000, print_every=10,
         if np.mean(scores_window) >= solve_score:
             print(f"\nEnvironment solved in {i_episode} episodes!\tAverage Score: {np.mean(scores_window):.2f}")
 
-            # Save final model
-            checkpoint_path = os.path.join(save_dir, 'checkpoint.pth')
+            # Save final model with configuration name
+            checkpoint_path = os.path.join(save_dir, f'checkpoint_{config_name}.pth')
             agent.save(checkpoint_path)
             print(f"Model saved to {checkpoint_path}")
 
-            # Plot scores
+            # Plot scores with configuration name
             fig = plot_scores(scores, window_size)
-            plt.savefig(os.path.join(save_dir, 'scores.png'))
+            plt.savefig(os.path.join(save_dir, f'scores_{config_name}.png'))
 
             break
 
     # Save final model regardless of whether environment is solved
-    checkpoint_path = os.path.join(save_dir, 'checkpoint.pth')
+    checkpoint_path = os.path.join(save_dir, f'checkpoint_{config_name}.pth')
     agent.save(checkpoint_path)
     print(f"Model saved to {checkpoint_path}")
 
+    # Also save as default checkpoint.pth for backward compatibility
+    default_checkpoint_path = os.path.join(save_dir, 'checkpoint.pth')
+    agent.save(default_checkpoint_path)
+    print(f"Model also saved to {default_checkpoint_path}")
+
     # Save scores to pickle file
     import pickle
-    scores_path = os.path.join(save_dir, 'scores.pkl')
+    scores_path = os.path.join(save_dir, f'scores_{config_name}.pkl')
     with open(scores_path, 'wb') as f:
         pickle.dump(scores, f)
     print(f"Scores saved to {scores_path}")
+
+    # Also save as default scores.pkl for backward compatibility
+    default_scores_path = os.path.join(save_dir, 'scores.pkl')
+    with open(default_scores_path, 'wb') as f:
+        pickle.dump(scores, f)
+    print(f"Scores also saved to {default_scores_path}")
 
     # Close environment
     env.close()
@@ -162,6 +206,8 @@ def train(env_path, n_episodes=1000, max_t=1000, print_every=10,
 def main():
     """Parse arguments and train the agent."""
     parser = argparse.ArgumentParser(description='Train a DDPG agent for continuous control')
+
+    # Environment and training parameters
     parser.add_argument('--env', type=str, required=True, help='path to Unity environment')
     parser.add_argument('--n_episodes', type=int, default=1000, help='maximum number of training episodes')
     parser.add_argument('--max_t', type=int, default=1000, help='maximum number of timesteps per episode')
@@ -170,6 +216,25 @@ def main():
     parser.add_argument('--window_size', type=int, default=100, help='window size for calculating average score')
     parser.add_argument('--save_dir', type=str, default='models', help='directory to save model checkpoints')
     parser.add_argument('--no-graphics', action='store_true', help='Run the environment in no-graphics mode')
+    parser.add_argument('--config_name', type=str, default='default', help='name of the configuration for saving models and plots')
+
+    # Agent hyperparameters
+    parser.add_argument('--buffer_size', type=int, default=int(1e6), help='replay buffer size')
+    parser.add_argument('--batch_size', type=int, default=64, help='minibatch size')
+    parser.add_argument('--gamma', type=float, default=0.99, help='discount factor')
+    parser.add_argument('--tau', type=float, default=5e-3, help='soft update parameter for target networks')
+    parser.add_argument('--lr_actor', type=float, default=3e-4, help='learning rate for the actor network')
+    parser.add_argument('--lr_critic', type=float, default=3e-3, help='learning rate for the critic network')
+    parser.add_argument('--weight_decay', type=float, default=0, help='L2 weight decay for the critic')
+    parser.add_argument('--fc1_units', type=int, default=256, help='number of units in first hidden layer')
+    parser.add_argument('--fc2_units', type=int, default=128, help='number of units in second hidden layer')
+
+    # Noise parameters
+    parser.add_argument('--ou_mu', type=float, default=0., help='mean of the Ornstein-Uhlenbeck noise')
+    parser.add_argument('--ou_theta', type=float, default=0.15, help='parameter controlling the speed of mean reversion')
+    parser.add_argument('--ou_sigma', type=float, default=0.2, help='initial standard deviation of the noise')
+    parser.add_argument('--ou_min_sigma', type=float, default=0.05, help='minimum standard deviation (sigma will decay to this)')
+    parser.add_argument('--ou_decay_period', type=int, default=10000, help='number of steps over which to decay sigma')
 
     args = parser.parse_args()
 
@@ -182,11 +247,29 @@ def main():
         solve_score=args.solve_score,
         window_size=args.window_size,
         save_dir=args.save_dir,
-        no_graphics=args.no_graphics
+        no_graphics=args.no_graphics,
+        config_name=args.config_name,
+        buffer_size=args.buffer_size,
+        batch_size=args.batch_size,
+        gamma=args.gamma,
+        tau=args.tau,
+        lr_actor=args.lr_actor,
+        lr_critic=args.lr_critic,
+        weight_decay=args.weight_decay,
+        fc1_units=args.fc1_units,
+        fc2_units=args.fc2_units,
+        ou_mu=args.ou_mu,
+        ou_theta=args.ou_theta,
+        ou_sigma=args.ou_sigma,
+        ou_min_sigma=args.ou_min_sigma,
+        ou_decay_period=args.ou_decay_period
     )
 
-    # Plot scores
+    # Plot scores with configuration name
     fig = plot_scores(scores, args.window_size)
+    plt.savefig(os.path.join(args.save_dir, f'scores_{args.config_name}.png'))
+
+    # Also save as default scores.png for backward compatibility
     plt.savefig(os.path.join(args.save_dir, 'scores.png'))
 
 if __name__ == '__main__':

@@ -51,6 +51,18 @@ class ReplayBuffer:
         return len(self.memory)
 
 
+import numpy as np
+import random
+import copy
+from collections import namedtuple, deque
+import matplotlib.pyplot as plt
+
+import torch
+import torch.nn.functional as F
+import torch.optim as optim
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 class OUNoise:
     """Ornstein-Uhlenbeck process with improved exploration."""
 

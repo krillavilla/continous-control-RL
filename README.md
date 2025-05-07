@@ -38,7 +38,7 @@ The barrier for solving the second version of the environment is slightly differ
 - After each episode, we add up the rewards that each agent received (without discounting), to get a score for each agent.  This yields 20 (potentially different) scores.  We then take the average of these 20 scores. 
 - This yields an **average score** for each episode (where the average is over all 20 agents).
 
-The environment is considered solved, when the average (over 100 episodes) of those average scores is at least +30. 
+The environment is considered solved, when the average (over 100 episodes) of those average scores is at least +30. In the case of the plot above, the environment was solved at episode 63, since the average of the average scores from episodes 64 to 163 (inclusive) was greater than +30.
 
 ### Getting Started
 
@@ -99,6 +99,41 @@ python src/train.py --env envs/Reacher_Linux/Reacher.x86_64 --n_episodes 5 --max
 ```
 
 The trained model will be saved to the `models/` directory.
+
+#### Hyperparameter Tuning
+
+To achieve the required score of +30 over 100 consecutive episodes, you may need to tune the hyperparameters. The training script supports various hyperparameters that can be adjusted:
+
+```bash
+python src/train.py --env envs/Reacher_Linux/Reacher.x86_64 \
+  --config_name "tuned_config" \
+  --n_episodes 2000 \
+  --buffer_size 1000000 \
+  --batch_size 128 \
+  --gamma 0.99 \
+  --tau 0.001 \
+  --lr_actor 0.0001 \
+  --lr_critic 0.001 \
+  --fc1_units 400 \
+  --fc2_units 300 \
+  --ou_sigma 0.2 \
+  --ou_theta 0.15
+```
+
+Key hyperparameters to consider tuning:
+
+- **Learning Rates**: `--lr_actor` and `--lr_critic` control how quickly the networks learn
+- **Network Architecture**: `--fc1_units` and `--fc2_units` define the size of the neural networks
+- **Exploration Noise**: `--ou_sigma` and `--ou_theta` control the Ornstein-Uhlenbeck noise process
+- **Training Duration**: `--n_episodes` can be increased to allow for more training time
+
+Each configuration will be saved with its name (e.g., `checkpoint_tuned_config.pth`), allowing you to compare different hyperparameter settings.
+
+For extended training sessions, you can use the `--no-graphics` flag to run the environment without visualization, which can speed up training:
+
+```bash
+python src/train.py --env envs/Reacher_Linux/Reacher.x86_64 --n_episodes 2000 --no-graphics
+```
 
 #### Running the Notebook
 
